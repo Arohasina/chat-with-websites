@@ -10,9 +10,11 @@ from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-
+import os
 
 load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
+
 
 def get_vectorstore_from_url(url):
     # get the text in document form
