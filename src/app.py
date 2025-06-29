@@ -28,7 +28,6 @@ def get_vectorstore_from_url(url):
 
 def get_context_retriever_chain(vector_store):
     llm = ChatOpenAI()
-
     retriever = vector_store.as_retriever()
 
     prompt = ChatPromptTemplate.from_messages([
@@ -60,7 +59,7 @@ def get_response(user_input):
 
     response = converstation_rag_chain.invoke({
             "chat_history": st.session_state.chat_history,
-            "input": user_query
+            "input": user_input
         })
     
     return response['answer']
@@ -77,11 +76,27 @@ with st.sidebar:
         placeholder="Please paste the website URL here...",
         help="Enter the full URL (e.g., https://example.com)")
     
+    # Initialize last_url to remember previously loaded URL
+if "last_url" not in st.session_state:
+    st.session_state.last_url = ""
+
+# If URL is valid and has changed, update vector store
+if website_url and website_url.startswith("http") and website_url != st.session_state.last_url:
+    try:
+        st.session_state.vector_store = get_vectorstore_from_url(website_url)
+        st.session_state.last_url = website_url  # update to new URL
+        st.session_state.chat_history = [
+            AIMessage(content="Website loaded! You can start asking questions.")
+        ]
+    except Exception as e:
+        st.error(f"Failed to load website: {e}")
+        st.stop()
+
 if website_url is None or website_url == "":
     st.info("Please enter a valid website URL to start chatting.")
 elif not website_url.startswith("http"):
     st.warning("Please make sure your URL starts with http:// or https://")
-    
+
 else:
     #session state
     if "chat_history" not in st.session_state:
