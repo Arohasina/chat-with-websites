@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-
+from hashlib import sha1
 
 load_dotenv() #load the .env file
 
@@ -23,8 +23,12 @@ def get_vectorstore_from_url(url):
     document_chunks = text_splitter.split_documents(documents)
 
     #create a vectorstore from the document chunks
-    vector_store = Chroma.from_documents(document_chunks, OpenAIEmbeddings())
-    
+    url_hash = sha1(url.encode()).hexdigest()
+    vector_store = Chroma.from_documents(
+        document_chunks,
+        OpenAIEmbeddings(),
+        collection_name=f"website-{url_hash}",
+    )
     return vector_store
 
 def get_context_retriever_chain(vector_store):
@@ -67,9 +71,8 @@ def get_response(user_input):
 
 #app configuration
 st.set_page_config(page_title="Chat with Website",page_icon= "💬")
-st.title("Chat with Website")
+st.title("Chat with any Website🌐")
 
-# Sidebar
 with st.sidebar:
     st.header("Settings")
     website_url = st.text_input(
@@ -78,22 +81,22 @@ with st.sidebar:
         help="Enter the full URL (e.g., https://example.com)")
 
 #Session State Setup:
-# Initialize last_url to remember previously loaded URL
+# Initialize session state variables if not already present
 if "last_url" not in st.session_state:
     st.session_state.last_url = ""
 if "vector_store" not in st.session_state:
     st.session_state.vector_store = None
-
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-
 
 #URL Validation & Loading:
 # Check if a new, well-formed, accessible URL was entered
 if website_url is None or website_url.strip() == "":
     st.info("Please enter a valid website URL to start chatting.")
+
 elif not website_url.startswith("http"):
     st.warning("Please make sure your URL starts with http:// or https://")
+
 elif website_url != st.session_state.last_url:
     try:
         response = requests.head(website_url, allow_redirects=True, timeout=5)
@@ -101,17 +104,16 @@ elif website_url != st.session_state.last_url:
             st.error(f"Website returned an error (status code {response.status_code}). Please check the URL.")
             st.session_state.vector_store = None
         else:
-            st.session_state.vector_store = get_vectorstore_from_url(website_url)
-            st.session_state.last_url = website_url
-            st.session_state.chat_history = [
-                AIMessage(content="Website loaded! You can start asking questions.")
-            ]
+            with st.spinner("Loading website content... This may take a moment."):
+                st.session_state.vector_store = get_vectorstore_from_url(website_url)
+                st.session_state.chat_history = [AIMessage(content="Website loaded! You can start asking questions.")]
+                st.session_state.last_url = website_url
     except requests.RequestException as e:
         st.error(f"Failed to access the website. Error: {e}")
         st.session_state.vector_store = None
 
 
-#Chat Interface:
+#Chat Interface - only shows if vector store is loaded:
 if st.session_state.vector_store:
     user_query = st.chat_input("Type your message here...")
     if user_query:
@@ -126,6 +128,7 @@ if st.session_state.vector_store:
         elif isinstance(message, AIMessage):
             with st.chat_message("AI"):
                 st.write(message.content)
+
 else:
     st.info("Chat input will appear once a valid website is loaded.")
     
