@@ -15,12 +15,4 @@ It uses LangChain with OpenAI embeddings and Chat models to:
 ## Credit
 This project was built as a learning exercise by following the tutorial from [alejandro-ao/chat-with-websites](https://youtu.be/bupx08ZgSFg?si=zxUf1Gf3QHxJfAHY). I wanted to practice working with LangChain, Streamlit, and retrieval-augmented generation (RAG) while gaining hands-on experience building a real-world chatbot application.
 
-The tutorial covered key concepts like:
-
-Using LangChain with large language models (e.g. GPT-4)
-
-Building a Streamlit interface for dynamic website interaction
-
-Implementing vector stores (ChromaDB) and conversational RAG pipelines
-
-To deepen my understanding, I added my own twists to the project, including custom URL validation logic, better interface flow, and improvements in session handling and error feedback.
+To deepen my understanding of the project, I added several custom features and improvements. These include URL hashing using SHA-1 to ensure each website loads into a unique Chroma collection and avoid stale context, custom URL validation logic, proper session state resets when switching URLs, and clearer error handling. I also enhanced the interface flow to make it more intuitive and responsive, and customized the Streamlit theme. 
