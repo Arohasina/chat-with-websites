@@ -79,7 +79,9 @@ with st.sidebar:
     
 if website_url is None or website_url == "":
     st.info("Please enter a valid website URL to start chatting.")
-
+elif not website_url.startswith("http"):
+    st.warning("Please make sure your URL starts with http:// or https://")
+    
 else:
     #session state
     if "chat_history" not in st.session_state:
