@@ -38,3 +38,7 @@ To deepen my understanding of the project, I added several custom features and i
 - **Pinecone** - Vector database for persistent storage
 - **OpenAI** - Language model and embeddings
 - **Python** - Core programming language
+
+## 🙏 Acknowledgments
+
+Original tutorial by alejandro-ao
