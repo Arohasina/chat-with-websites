@@ -7,4 +7,3 @@ chromadb==1.0.13
 python-dotenv==1.1.1
 beautifulsoup4==4.12.3
 protobuf==3.20.3
-git+https://github.com/coleifer/pysqlite3.git
