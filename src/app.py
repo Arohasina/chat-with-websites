@@ -17,8 +17,19 @@ load_dotenv() #load the .env file
 
 # Initialize Pinecone
 def init_pinecone():
-    pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-    index_name = os.getenv("PINECONE_INDEX_NAME", "chatwithwebsite-index")
+    # Try to get API key from environment variables or Streamlit secrets
+    try:
+        api_key = os.getenv("PINECONE_API_KEY") or st.secrets.get("PINECONE_API_KEY")
+        index_name = os.getenv("PINECONE_INDEX_NAME") or st.secrets.get("PINECONE_INDEX_NAME", "chatwithwebsite-index")
+    except:
+        # Fallback to environment variables only
+        api_key = os.getenv("PINECONE_API_KEY")
+        index_name = os.getenv("PINECONE_INDEX_NAME", "chatwithwebsite-index")
+    
+    if not api_key:
+        raise ValueError("Pinecone API key not found. Please check your environment variables or Streamlit secrets.")
+    
+    pc = Pinecone(api_key=api_key)
     return pc, index_name
 
 def get_vectorstore_from_url(url):
@@ -37,8 +48,13 @@ def get_vectorstore_from_url(url):
     url_hash = sha1(url.encode()).hexdigest()
     namespace = f"website-{url_hash}"
     
-    # Create embeddings
-    embeddings = OpenAIEmbeddings()
+    # Create embeddings - handle API key for Streamlit Cloud
+    try:
+        openai_api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+    except:
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+    
+    embeddings = OpenAIEmbeddings(api_key=openai_api_key)
     
     # Create vectorstore from documents using Pinecone
     vector_store = PineconeVectorStore.from_documents(
@@ -51,7 +67,13 @@ def get_vectorstore_from_url(url):
     return vector_store, namespace
 
 def get_context_retriever_chain(vector_store):
-    llm = ChatOpenAI()
+    # Handle OpenAI API key for Streamlit Cloud
+    try:
+        openai_api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+    except:
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+    
+    llm = ChatOpenAI(api_key=openai_api_key)
     retriever = vector_store.as_retriever()
 
     prompt = ChatPromptTemplate.from_messages([
@@ -65,7 +87,13 @@ def get_context_retriever_chain(vector_store):
     return retriever_chain
 
 def get_conversational_rag_chain(retriever_chain):
-    llm = ChatOpenAI()
+    # Handle OpenAI API key for Streamlit Cloud
+    try:
+        openai_api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+    except:
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+    
+    llm = ChatOpenAI(api_key=openai_api_key)
 
     prompt= ChatPromptTemplate.from_messages([
         ("system", "Answer the user's question based on the below context:\n\n{context}"),
@@ -110,6 +138,9 @@ with st.sidebar:
         placeholder="Please paste the website URL here...",
         help="Enter the full URL (e.g., https://example.com)")
     
+    # Add a button to load the website
+    load_button = st.button("Load Website", type="primary")
+    
     # Add clear button
     if st.button("Clear Chat History"):
         st.session_state.chat_history = []
@@ -136,7 +167,7 @@ if website_url is None or website_url.strip() == "":
 elif not website_url.startswith("http"):
     st.warning("Please make sure your URL starts with http:// or https://")
 
-elif website_url != st.session_state.last_url:
+elif (load_button or website_url != st.session_state.last_url) and website_url.strip() != "":
     try:
         response = requests.head(website_url, allow_redirects=True, timeout=5)
         if response.status_code >= 400:
