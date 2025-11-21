@@ -1,6 +1,6 @@
 # Chat with Any Website 🌐💬
 
-This project was built as a learning exercise by following the tutorial from [alejandro-ao/chat-with-websites](https://github.com/alejandro-ao/chat-with-websites). To practice working with LangChain, Streamlit, and retrieval-augmented generation (RAG) while experiencing building a real-world chatbot application.
+This project was built as a learning exercise to practice working with LangChain, Streamlit, and retrieval-augmented generation (RAG) while experiencing building a real-world chatbot application.
 
 ## Live Demo
 
